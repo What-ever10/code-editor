@@ -4,6 +4,7 @@ const cors=require('cors')
 const http = require('http');
 const { Server } = require('socket.io');
 const mongoose=require('mongoose');
+const compilerRoutes=require('./routes/compilerRoutes');
 
 //connect to mongoose using an iife js
 (async() => {
@@ -90,6 +91,8 @@ app.get('/',(req,res)=>{
     console.log('server is running');
     res.send('server is running');
 })
+//routing
+app.use('/api/compiler', compilerRoutes);
 server.listen(PORT,()=>{
     console.log(`server is running on http://localhost:${PORT}`);
 })
