@@ -5,7 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const compilerRoutes = require('./routes/compilerRoutes'); // We need this for the compiler
+const compilerRoutes = require('./routes/compilerRoutes');
 
 // --- MongoDB Connection ---
 mongoose.connect(process.env.MONGO_URI)
@@ -21,19 +21,31 @@ const Room = mongoose.model('Room', roomSchema);
 
 const PORT = process.env.PORT || 5001;
 const app = express();
-app.use(cors());
 
-// --- THE FIX: Add the express.json() middleware ---
-// This line is crucial. It tells Express to automatically parse any
-// incoming JSON payloads, making them available on the req.body object.
-// Without this, our compiler route would not work.
+// --- SECURE CORS CONFIGURATION ---
+const allowedOrigin = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+// 2. CORS options object.
+const corsOptions = {
+    origin: allowedOrigin,
+    methods: ['GET', 'POST'],
+    credentials: true, 
+};
+
+
+app.use(cors(corsOptions));
+// 
+
 app.use(express.json());
-// --- END OF FIX ---
 
 const server = http.createServer(app);
+
+// --- SECURE SOCKET.IO CONFIGURATION ---
+
 const io = new Server(server, {
-    cors: { origin: "*", methods: ["GET", "POST"] }
+    cors: corsOptions
 });
+
 
 const userSocketMap = {};
 function getAllConnectedClients(roomId) {
@@ -85,8 +97,7 @@ app.get('/', (req, res) => {
     res.send('CodeSync server is running!');
 });
 
-// Use the compiler routes
-app.use('/api/compiler', compilerRoutes);
+app.use('/api/compiler', compilerRoutes);//routing
 
 server.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
